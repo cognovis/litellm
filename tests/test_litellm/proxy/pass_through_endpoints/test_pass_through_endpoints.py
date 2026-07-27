@@ -3137,9 +3137,7 @@ async def test_pass_through_request_non_streaming_uses_content_for_state_raw_bod
     Bedrock SigV4 path: exact signed bytes live on request.state; upstream must receive
     content=... even if pre_call_hook mutates the parsed dict (would change json=).
     """
-    # Bytes that were signed (simulated); parsed body + hook will diverge on purpose.
-    raw_signed = b'{"retrievalQuery":{"text":"signed"},"sig":"intact"}'
-    parsed_from_wire = {"retrievalQuery": {"text": "signed"}, "sig": "intact"}
+    raw_signed = b"\xff\x00binary-body"
 
     mock_request = MagicMock(spec=Request)
     mock_request.method = "POST"
@@ -3147,9 +3145,7 @@ async def test_pass_through_request_non_streaming_uses_content_for_state_raw_bod
     mock_request.headers = Headers({"Content-Type": "application/json"})
     mock_request.state = SimpleNamespace()
     setattr(mock_request.state, LITELLM_PASS_THROUGH_RAW_BODY_STATE_KEY, raw_signed)
-    mock_request.body = AsyncMock(
-        return_value=json.dumps(parsed_from_wire).encode("utf-8")
-    )
+    mock_request.body = AsyncMock(return_value=raw_signed)
 
     mock_user = MagicMock()
     mock_user.api_key = "sk-test"

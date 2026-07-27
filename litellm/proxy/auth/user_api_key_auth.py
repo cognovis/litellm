@@ -108,11 +108,24 @@ except ImportError as e:
 
 user_api_key_service_logger_obj = ServiceLogging()  # used for tracking latency on OTEL
 
+_ASSEMBLYAI_UPLOAD_ROUTES = frozenset(
+    (
+        "/assemblyai/v2/upload",
+        "/eu.assemblyai/v2/upload",
+    )
+)
+
 
 def _normalize_public_auth_route(route: str) -> str:
     if route != "/" and route.endswith("/"):
         return route.rstrip("/")
     return route
+
+
+async def _read_request_data_for_auth(request: Request, route: str) -> dict:
+    if request.method == "POST" and route.rstrip("/") in _ASSEMBLYAI_UPLOAD_ROUTES:
+        return {}
+    return await _read_request_body(request=request)
 
 
 def _route_requires_auth_despite_public(route: str, general_settings: Optional[dict]) -> bool:
@@ -2527,9 +2540,9 @@ async def user_api_key_auth(
     # close, and the trace never reaches the backend.
     _ensure_parent_otel_span_on_request_state(request)
 
-    request_data = await _read_request_body(request=request)
-    request_data = populate_request_with_path_params(request_data=request_data, request=request)
     route: str = get_request_route(request=request)
+    request_data = await _read_request_data_for_auth(request=request, route=route)
+    request_data = populate_request_with_path_params(request_data=request_data, request=request)
     ## CHECK IF ROUTE IS ALLOWED
 
     # Run the whole auth phase inside a live ``auth`` span so the DB lookups it

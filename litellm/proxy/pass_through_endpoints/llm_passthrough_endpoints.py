@@ -1205,17 +1205,29 @@ async def assemblyai_proxy_route(
 
     ## check for streaming
     is_streaming_request = False
-    # assemblyai is streaming when 'stream' = True is in the body
-    if request.method == "POST":
+    is_upload_request = request.method == "POST" and encoded_endpoint == "/v2/upload"
+    if is_upload_request:
+        setattr(
+            request.state,
+            LITELLM_PASS_THROUGH_RAW_BODY_STATE_KEY,
+            await request.body(),
+        )
+    elif request.method == "POST":
         _request_body = await request.json()
         if _request_body.get("stream"):
             is_streaming_request = True
+
+    content_type = request.headers.get("content-type")
+    assemblyai_headers = {
+        "Authorization": "{}".format(assemblyai_api_key),
+        **({"Content-Type": content_type} if content_type else {}),
+    }
 
     ## CREATE PASS-THROUGH
     endpoint_func = create_pass_through_route(
         endpoint=endpoint,
         target=str(updated_url),
-        custom_headers={"Authorization": "{}".format(assemblyai_api_key)},
+        custom_headers=assemblyai_headers,
         is_streaming_request=is_streaming_request,
     )  # dynamically construct pass-through endpoint based on incoming path
     received_value = await endpoint_func(
