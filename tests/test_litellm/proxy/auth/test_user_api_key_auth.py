@@ -7,7 +7,7 @@ from unittest.mock import ANY, AsyncMock, MagicMock, patch
 
 
 import pytest
-from fastapi import status
+from fastapi import Request, status
 
 import litellm
 import litellm.proxy.proxy_server
@@ -34,6 +34,7 @@ from litellm.proxy.auth.user_api_key_auth import (
     _PendingAutoRegister,
     _matches_routing_override,
     _read_request_data_for_auth,
+    _request_http_method,
     _reserve_budget_after_common_checks,
     _route_requires_auth_despite_public,
     _routing_selector_matches_claim,
@@ -71,6 +72,25 @@ async def test_regression_assemblyai_upload_auth_does_not_read_binary_body(route
     assert request_data == {}
     assert body_parse_exception is None
     request.body.assert_not_awaited()
+
+
+def test_request_http_method_from_scope_without_method():
+    request = Request({"type": "http", "path": "/chat/completions", "headers": []})
+
+    assert _request_http_method(request) is None
+
+
+@pytest.mark.asyncio
+async def test_read_request_data_for_auth_does_not_require_http_method():
+    request = Request({"type": "http", "path": "/chat/completions", "headers": []})
+
+    request_data, body_parse_exception = await _read_request_data_for_auth(
+        request=request,
+        route="/chat/completions",
+    )
+
+    assert request_data == {}
+    assert body_parse_exception is None
 
 
 def test_get_api_key():
