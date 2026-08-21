@@ -1,0 +1,61 @@
+name: Cognovis AssemblyAI binary upload regression
+
+on:
+  push:
+    branches:
+      - litellm_fix_assemblyai_binary_upload_staging
+  pull_request:
+    branches:
+      - litellm_fix_assemblyai_binary_upload_staging
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: ./.github/actions/setup-uv-with-retries
+        with:
+          version: "0.10.9"
+
+      - name: Install proxy test dependencies
+        run: |
+          .github/scripts/uv_sync_with_retries.sh \
+            --frozen \
+            --group ci \
+            --group proxy-dev \
+            --extra google \
+            --extra proxy \
+            --extra semantic-router
+
+      - name: Generate Prisma client
+        env:
+          PRISMA_BINARY_CACHE_DIR: ${{ runner.temp }}/prisma-cache
+        run: |
+          uv run --no-sync prisma generate --schema litellm/proxy/schema.prisma
+
+      - name: Run AssemblyAI binary upload regressions
+        run: |
+          uv run --no-sync pytest \
+            tests/test_litellm/proxy/auth/test_user_api_key_auth.py::test_regression_assemblyai_upload_auth_does_not_read_binary_body \
+            tests/test_litellm/proxy/pass_through_endpoints/test_llm_pass_through_endpoints.py::test_regression_assemblyai_upload_preserves_raw_body_and_content_type \
+            tests/test_litellm/proxy/pass_through_endpoints/test_pass_through_endpoints.py::test_regression_pass_through_skips_json_parse_for_binary_state_raw_body \
+            tests/pass_through_unit_tests/test_assemblyai_unit_tests_passthrough.py::test_get_assembly_region_from_proxy_path \
+            --tb=short \
+            -vv
