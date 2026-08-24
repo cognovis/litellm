@@ -3,10 +3,10 @@ name: Cognovis AssemblyAI binary upload regression
 on:
   push:
     branches:
-      - litellm_fix_assemblyai_binary_upload_staging
+      - main
   pull_request:
     branches:
-      - litellm_fix_assemblyai_binary_upload_staging
+      - main
 
 permissions:
   contents: read

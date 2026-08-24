@@ -3,7 +3,7 @@ name: Publish polaris-litellm to GHCR
 on:
   push:
     branches:
-      - litellm_fix_assemblyai_binary_upload_staging
+      - main
   workflow_dispatch:
 
 permissions: {}
@@ -40,8 +40,7 @@ jobs:
         with:
           images: ghcr.io/cognovis/polaris-litellm
           tags: |
-            type=raw,value=2026.08.21
-            type=raw,value=assemblyai-raw-upload
+            type=raw,value=main
             type=sha,prefix=,format=long
 
       - name: Build and push linux/amd64
