@@ -55,5 +55,6 @@ jobs:
             ${{ steps.meta.outputs.labels }}
             de.cognovis.litellm.source=https://github.com/cognovis/litellm.git
             de.cognovis.litellm.revision=${{ github.sha }}
+            de.cognovis.litellm.upstream=v1.106.2
           provenance: true
           sbom: true
