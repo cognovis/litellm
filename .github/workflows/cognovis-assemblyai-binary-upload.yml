@@ -53,9 +53,9 @@ jobs:
       - name: Run AssemblyAI binary upload regressions
         run: |
           uv run --no-sync pytest \
-            tests/test_litellm/proxy/auth/test_user_api_key_auth.py::test_regression_assemblyai_upload_auth_does_not_read_binary_body \
-            tests/test_litellm/proxy/pass_through_endpoints/test_llm_pass_through_endpoints.py::test_regression_assemblyai_upload_preserves_raw_body_and_content_type \
-            tests/test_litellm/proxy/pass_through_endpoints/test_pass_through_endpoints.py::test_regression_pass_through_skips_json_parse_for_binary_state_raw_body \
-            tests/pass_through_unit_tests/test_assemblyai_unit_tests_passthrough.py::test_get_assembly_region_from_proxy_path \
+            tests/unit/proxy/auth/test_user_api_key_auth_request_flow.py::test_regression_assemblyai_upload_auth_does_not_read_binary_body \
+            tests/unit/proxy/pass_through_endpoints/test_llm_pass_through_endpoints.py::test_regression_assemblyai_upload_preserves_raw_body_and_content_type \
+            tests/unit/proxy/pass_through_endpoints/test_pass_through_endpoints.py::test_regression_pass_through_skips_json_parse_for_binary_state_raw_body \
+            tests/unit/proxy/pass_through_endpoints/llm_provider_handlers/test_assembly_passthrough_logging_handler.py::test_get_assembly_region_from_proxy_path \
             --tb=short \
             -vv
